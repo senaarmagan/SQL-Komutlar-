@@ -50,8 +50,8 @@ Veriyi sorgulamak için kullanılır. Veriyi okur/sorgular.
 Bir tablodan verinin seçilmesine yarar.
 
 ```sql
-SELECT * FROM film; # Tüm kolonları gösterir.
-SELECT column1, column2,... FROM film; # Sadece istenilen kolonlar gösterilir.
+SELECT * FROM film; -- Tüm kolonları gösterir.
+SELECT column1, column2,... FROM film; -- Sadece istenilen kolonlar gösterilir.
 ```
 ### DML - INSERT 
 Yeni kayıt ekler. Eksik kalanlara varsayılan değer atanır(NULL veya DEFAULT)
@@ -74,15 +74,15 @@ DELETE FROM film_actor WHERE actor_id=1;
 ### DML - CALL 
 Bir veritabanı içinde tanımlanmış stored procedure çalıştırmak için kullanılan DML komutudur.
 ```sql
-CALL update_all_salaries(); # Parametresiz procedure çağırma
-CALL add_employee('Ahmet', 'Yilmaz', 45000); # Parametre alan procedure çağırma
+CALL update_all_salaries(); -- Parametresiz procedure çağırma
+CALL add_employee('Ahmet', 'Yilmaz', 45000);  -- Parametre alan procedure çağırma
 ```
 ### DML - EXPLAIN CALL 
 Bir stored procedure çalıştırılmadan önce veritabanının bu çağrıyı nasıl işlediğini, hangi planı kullanacağını ve hangi adımların gerçekleşeceğini analiz etmek için kullanılır.
 ```sql
-EXPLAIN CALL update_all_salaries(); # Bu komut procedure içerisinde yer alan SELECT/UPDATE/INSERT sorgularının yürütme planını döker.
-EXPLAIN CALL add_employee('Ahmet', 'Yılmaz', 45000); # Paramtre alarak bu şekilde çalışabilir.
-EXPLAIN ANALYZE CALL update_all_salaries(); # PostgreSQL gibi sistemlerde bu şekilde çalışır.
+EXPLAIN CALL update_all_salaries(); -- Bu komut procedure içerisinde yer alan SELECT/UPDATE/INSERT sorgularının yürütme planını döker.
+EXPLAIN CALL add_employee('Ahmet', 'Yılmaz', 45000); -- Paramtre alarak bu şekilde çalışabilir.
+EXPLAIN ANALYZE CALL update_all_salaries(); -- PostgreSQL gibi sistemlerde bu şekilde çalışır.
 ```
 ### DML - LOCK TABLE
 Bir tabloyu belirli bir kilit (lock) moduyla kilitleyerek diğer işlemlerin bu tablo üzerinde okuma/yazma yapmasını kontrol eden bir DML komutudur.
@@ -90,8 +90,8 @@ Transaction içinde kullanılır ve veri bütünlüğünü korumak için kritik 
 Kullanım amacı olarak aynı tablo üzerinde çakışan işlemleri engellemek, veri tutarlılığını korumak ve kritik güncelleme işlemleri sırasında diğer kullanıcıların müdahalesini engellemektir.
 Bazı veritabanlarında kullanımı değişmektedir.
 ```sql
-LOCK TABLE employees IN SHARE MODE; # Başkaları tabloyu okuyabilir. Ancak tablo üzerinde UPDATE, DELETE, INSERT yapamaz.
-LOCK TABLE employees IN EXCLUSIVE MODE; # Diğer kullanıcıların tabloya erişimini tamamen engeller.
+LOCK TABLE employees IN SHARE MODE; -- Başkaları tabloyu okuyabilir. Ancak tablo üzerinde UPDATE, DELETE, INSERT yapamaz.
+LOCK TABLE employees IN EXCLUSIVE MODE; -- Diğer kullanıcıların tabloya erişimini tamamen engeller.
 ```
 ### DDL - CREATE 
 Tablo oluşturur.
@@ -111,16 +111,16 @@ CREATE TABLE test_actor(
 CREATE TABLE new_table_name AS
     SELECT column1, column2,...
     FROM existing_table_name
-    WHERE ....; # Başka tablodan bazı kolonlar alınarak yeni tablo oluşturur.
+    WHERE ....; -- Başka tablodan bazı kolonlar alınarak yeni tablo oluşturur.
 ```
 ### DDL - ALTER 
 Kolon ekleme / silme / değiştirme / güncelleştirme yapar.
 
 ```sql
-ALTER TABLE test_actor ADD COLUMN email VARCHAR(50); # Yeni sütun ekler.
-ALTER TABLE test_actor RENAME COLUMN notes TO remarks; # Sutün adını değiştirir.
-ALTER TABLE test_actor ALTER COLUMN height_cm TYPE DECIMAL(6,2); # Sütun tipini değiştirir.
-ALTER TABLE test_actor DROP COLUMN active; # Sütunu siler.
+ALTER TABLE test_actor ADD COLUMN email VARCHAR(50); -- Yeni sütun ekler.
+ALTER TABLE test_actor RENAME COLUMN notes TO remarks; -- Sutün adını değiştirir.
+ALTER TABLE test_actor ALTER COLUMN height_cm TYPE DECIMAL(6,2); -- Sütun tipini değiştirir.
+ALTER TABLE test_actor DROP COLUMN active; -- Sütunu siler.
 ```
 ### DDL - DROP
 Bir tabloyu tamamen kalıcı olarak siler. 
@@ -139,42 +139,42 @@ Tablonun adını değiştirir.
 
 ```sql
 RENAME TABLE test_actor TO all_actors;
-ALTER TABLE test_actor RENAME TO all_actors; # PostgreSQL'de bu şekilde çalışır.
+ALTER TABLE test_actor RENAME TO all_actors; -- PostgreSQL'de bu şekilde çalışır.
 ```
 ### DDL - COMMENT 
 Bir tabloya veya sütuna açıklama eklemek için kullanılır.
 
 ```sql
-COMMENT ON TABLE all_actors IS 'Tüm aktörlerin bilgilerini tutan test tablosudur.'; # Tabloya yorum ekleme.
+COMMENT ON TABLE all_actors IS 'Tüm aktörlerin bilgilerini tutan test tablosudur.'; -- Tabloya yorum ekleme.
 ```
 ```sql
-COMMENT ON COLUMN all_actors.first_name IS 'Aktörün adı'; # Sütuna yorum ekleme.
+COMMENT ON COLUMN all_actors.first_name IS 'Aktörün adı'; -- Sütuna yorum ekleme.
 ```
 ### DCL - GRANT
 Kullanıcılara yetki verir. Güvenlik için kullanılır.
 
 ```sql
-GRANT SELECT ON TABLE all_actors TO public; # Tüm kullanıcılara izin verir.
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE all_actors TO my_user; # Belirli bir kullanıcıya izin verir. 
-GRANT SELECT(first_name, last_name) ON TABLE all_actors TO my_user; # Sütun bazlı izin verir.
+GRANT SELECT ON TABLE all_actors TO public; -- Tüm kullanıcılara izin verir.
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE all_actors TO my_user; -- Belirli bir kullanıcıya izin verir. 
+GRANT SELECT(first_name, last_name) ON TABLE all_actors TO my_user; -- Sütun bazlı izin verir.
 ```
 ```sql
-CREATE ROLE actor_reader; # Rol oluştur.
-GRANT SELECT ON TABLE all_actors TO actor_reader; # Oluşturulan role izin verir.
+CREATE ROLE actor_reader; -- Rol oluştur.
+GRANT SELECT ON TABLE all_actors TO actor_reader; -- Oluşturulan role izin verir.
 ```
 ### DCL - REVOKE
 Yetkileri geri alır. Kullanıcı erişimi kaybeder.
 
 ```sql
-REVOKE SELECT ON TABLE all_actors FROM public; # Daha önce herkese verilen tüm izinler kaldırılır.
-REVOKE ALL PRIVILEGES ON TABLE all_actors FROM my_user; # Kullanıcıya tabloya hiç bir şekilde erişemez.
-REVOKE SELECT(first_name, last_name) ON TABLE all_actors FROM my_user; # Kullanıcı sadece iki sütuna erişemez.
+REVOKE SELECT ON TABLE all_actors FROM public; -- Daha önce herkese verilen tüm izinler kaldırılır.
+REVOKE ALL PRIVILEGES ON TABLE all_actors FROM my_user; -- Kullanıcıya tabloya hiç bir şekilde erişemez.
+REVOKE SELECT(first_name, last_name) ON TABLE all_actors FROM my_user; -- Kullanıcı sadece iki sütuna erişemez.
 ```
 ### DCL - DENY
 DENY, bir kullanıcıya veya role belirli bir veritabanı nesnesi üzerindeki bir izni açıkça yasaklamak için kullanılan bir DCL komutudur. GRANT ile verilen izinlerden daha yüksek önceliğe sahiptir ve kullanıcıda ilgili izin olsa bile erişimi engeller.
 
 ```sql
-DENY SELECT ON employees TO user1; # user1 kullanıcısının employees tablosundan SELECT yapmasını engeller. PostgreSQL de DENY komutu yok.
+DENY SELECT ON employees TO user1; -- user1 kullanıcısının employees tablosundan SELECT yapmasını engeller. PostgreSQL de DENY komutu yok.
 ```
 ### TCL - COMMIT
 Yapılan değişiklikleri kalıcı hale getirir. Transaction onaylanır. Değişiklikler geri alınamaz.
@@ -182,7 +182,7 @@ Yapılan değişiklikleri kalıcı hale getirir. Transaction onaylanır. Değiş
 ```sql
 BEGIN;
 UPDATE all_actors SET first_name = 'Test' WHERE actor_id = 1;
-COMMIT; # Bir işlem başlatır ve kalıcı hale gelir.
+COMMIT; -- Bir işlem başlatır ve kalıcı hale gelir.
 ```
 ### TCL - ROLLBACK
 Değişiklikleri geri alır. Commit yapılmamış tüm işlemler geri döner.
