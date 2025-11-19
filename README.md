@@ -24,7 +24,7 @@ Tablodaki verileri ekleme, değiştirme, silme gibi veri üzerinde işlem yapar.
 
 ## 3. DCL (Data Control Language)
 
-Kullanıcı yetkilerini yönetir. Yetki ve izin kontrölü yapar.
+Kullanıcı yetkilerini yönetir. Yetki ve izin kontrolü yapar.
 
  `GRANT`, `REVOKE`, `DENY`
 
@@ -40,7 +40,7 @@ Transaction = Veritabanlarında yapılan işlemlerin otomatik olarak gerçekleş
 
 Veriyi sorgulamak için kullanılır. Veriyi okur/sorgular.
 
-`SELECT`:
+`SELECT`
 
 ---
 
@@ -50,7 +50,8 @@ Veriyi sorgulamak için kullanılır. Veriyi okur/sorgular.
 Bir tablodan verinin seçilmesine yarar.
 
 ```sql
-SELECT * FROM employees;
+SELECT * FROM employees; # tüm kolonları gösterir
+SELECT column1, column2,... FROM employees; # Sadece istenilen kolonlar gösterilir.
 ```
 ### DML - INSERT 
 Yeni kayıt ekler. Eksik kalanlara varsayılan değer atanır(NULL veya DEFAULT)
@@ -91,17 +92,23 @@ Tablo oluşturur.
 ```sql
 CREATE TABLE emplooyes(
               id INT PrimaryKEY,
-              name VarCHAR(100),
-              salary DECIMAL(10,2),
-              depertmant_id INT);
+              name varchar(100),
+              salary decimal(10,2),
+              depertmant_id INT);  #yeni tablo oluşturur.
+```
+```sql
+CREATE TABLE new_table_name AS
+    SELECT column1, column2,...
+    FROM existing_table_name
+    WHERE ....; # başka tablodan bazı kolonlar alınarak yeni tablo oluşturur.
 ```
 ### DDL - ALTER 
 Kolon ekleme / silme / değiştirme / güncelleştirme yapar.
 
 ```sql
-ALTER TABLE employees ADD birthdate DATE;
-ALTER TABLE employees DROP COLUMN birthdate;
-ALTER TABLE employees MODIFY salary DECIMAL(10,2);
+ALTER TABLE employees ADD birthdate DATE; # yeni kolon ekler
+ALTER TABLE employees DROP COLUMN birthdate; # kolonu siler
+ALTER TABLE employees MODIFY salary DECIMAL(10,2); # veri tipini değiştirir
 ```
 ### DDL - DROP
 Bir tabloyu tamamen kalıcı olarak siler. 
@@ -122,9 +129,14 @@ Tablonun adını değiştirir.
 RENAME TABLE employees TO staff;
 ```
 ### DDL - COMMENT 
+Bir tabloya veya sütuna açıklama eklemek için kullanılır.
 
 ```sql
-
+COMMENT ON TABLE employees IS 'Çalışan bilgilerini tutan tablo'; #Tabloya yorum ekleme
+```
+```sql
+COMMENT ON COLUMN employees.name IS 'Çalışanın adı'; #Sütuna yorum ekleme
+SELECT * FROM employees;
 ```
 ### DCL - GRANT
 Kullanıcılara yetki verir. Güvenlik için kullanılır.
@@ -139,9 +151,10 @@ Yetkileri geri alır. Kullanıcı erişimi kaybeder.
 REVOKE INSERT ON employees TO user1;
 ```
 ### DCL - DENY
+DENY, bir kullanıcıya veya role belirli bir veritabanı nesnesi üzerindeki bir izni açıkça yasaklamak için kullanılan bir DCL komutudur. GRANT ile verilen izinlerden daha yüksek önceliğe sahiptir ve kullanıcıda ilgili izin olsa bile erişimi engeller.
 
 ```sql
-
+DENY SELECT ON employees TO user1; # user1 kullanıcısının employees tablosundan SELECT yapmasını engeller:
 ```
 ### TCL - COMMIT
 Yapılan değişiklikleri kalıcı hale getirir. Transaction onaylanır. Değişiklikler geri alınamaz.
@@ -162,16 +175,48 @@ Ara kontrol noktası oluşturur. ROLLBACK işlemini daha küçük bölümlere ay
 SAVEPOINT sp1;
 ```
 ### TCL - SET TRANSACTION
-
+Bir transaction’ın özelliklerini (örneğin isolation level, read/write modu gibi) başlatılmadan önce tanımlamak için kullanılan bir TCL komutudur.Bu komut, veritabanı işlemlerinin nasıl davranacağını kontrol etmeye yarar.
 ```sql
-
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+BEGIN;
+SELECT * FROM orders;
+COMMIT; # isolation belirleme
+```
+```sql
+SET TRANSACTION READ ONLY;
+BEGIN;
+SELECT COUNT(*) FROM logs;
+COMMIT; # sadece okuma
+```
+```sql
+SET TRANSACTION READ WRITE;
+BEGIN;
+UPDATE employees SET salary = salary * 1.1;
+COMMIT; # sadece yazma
 ```
 ### TCL - SET CONSTRAINT
+Bir transaction sırasında foreign key veya check constraint gibi kısıtlamaların ne zaman kontrol edileceğini belirlemek için kullanılan bir TCL komutudur. Özellikle PostgreSQL gibi sistemlerde yaygın kullanılır.Kısıtlamalar iki şekilde ayarlanabilir:
 
+DEFERRED → Kısıtlamalar transaction sonuna kadar kontrol edilmez.
+
+IMMEDIATE → Kısıtlamalar her işlemden sonra anında kontrol edilir.
 ```sql
-
+BEGIN;
+SET CONSTRAINTS ALL DEFERRED; # Bu işlemler sırasında FK hatası hemen oluşmaz
+UPDATE orders SET customer_id = 999 WHERE id = 1; 
+UPDATE customers SET id = 999 WHERE id = 10;
+COMMIT; # Tüm kısıtlamaları transaction sonuna erteleme
 ```
-
+```sql
+BEGIN;
+SET CONSTRAINTS fk_orders_customer DEFERRED;
+UPDATE orders SET customer_id = 200 WHERE id = 5;
+COMMIT; # Belirli bir constraint’i DEFERRED yapma
+```
+```sql
+SET CONSTRAINTS ALL IMMEDIATE; # Kısıtlamaları tekrar IMMEDIATE moda alma
+# Bu durumda, o anda geçersiz bir veri varsa sistem anında hata verir
+```
 
 
 
