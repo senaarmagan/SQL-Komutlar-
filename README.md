@@ -50,7 +50,7 @@ Veriyi sorgulamak için kullanılır. Veriyi okur/sorgular.
 Bir tablodan verinin seçilmesine yarar.
 
 ```sql
-SELECT * FROM employees; # tüm kolonları gösterir
+SELECT * FROM employees; # Tüm kolonları gösterir
 SELECT column1, column2,... FROM employees; # Sadece istenilen kolonlar gösterilir.
 ```
 ### DML - INSERT 
@@ -72,19 +72,26 @@ Mevcut kaydı siler. Sadece belirtilen kayıtları siler.
 DELETE FROM employees WHERE name = 'Ahmet';
 ```
 ### DML - CALL 
-
+Bir veritabanı içinde tanımlanmış stored procedure çalıştırmak için kullanılan DML komutudur.
 ```sql
-
+CALL update_all_salaries(); # Parametresiz procedure çağırma
+CALL add_employee('Ahmet', 'Yilmaz', 45000); # Parametre alan procedure çağırma
 ```
 ### DML - EXPLAIN CALL 
-
+Bir stored procedure çalıştırılmadan önce veritabanının bu çağrıyı nasıl işlediğini, hangi planı kullanacağını ve hangi adımların gerçekleşeceğini analiz etmek için kullanılır.
 ```sql
-
+EXPLAIN CALL update_all_salaries(); # Bu komut procedure içerisinde yer alan SELECT/UPDATE/INSERT sorgularının yürütme planını döker.
+EXPLAIN CALL add_employee('Ahmet', 'Yılmaz', 45000); # Paramtre alarak bu şekilde çalışabilir.
+EXPLAIN ANALYZE CALL update_all_salaries(); # PostgreSQL gibi sistemlerde bu şekilde çalışır.
 ```
 ### DML - LOCK TABLE
-
+Bir tabloyu belirli bir kilit (lock) moduyla kilitleyerek diğer işlemlerin bu tablo üzerinde okuma/yazma yapmasını kontrol eden bir DML komutudur.
+Transaction içinde kullanılır ve veri bütünlüğünü korumak için kritik öneme sahiptir.
+Kullanım amacı olarak aynı tablo üzerinde çakışan işlemleri engellemek, veri tutarlılığını korumak ve kritik güncelleme işlemleri sırasında diğer kullanıcıların müdahalesini engellemektir.
+Bazı veritabanlarında kullanımı değişmektedir.
 ```sql
-
+LOCK TABLE employees IN SHARE MODE; # Başkaları tabloyu okuyabilir. Ancak tablo üzerinde UPDATE, DELETE, INSERT yapamaz.
+LOCK TABLE employees IN EXCLUSIVE MODE; # Diğer kullanıcıların tabloya erişimini tamamen engeller.
 ```
 ### DDL - CREATE 
 Tablo oluşturur.
@@ -94,21 +101,21 @@ CREATE TABLE emplooyes(
               id INT PrimaryKEY,
               name varchar(100),
               salary decimal(10,2),
-              depertmant_id INT);  #yeni tablo oluşturur.
+              depertmant_id INT);  # Yeni tablo oluşturur.
 ```
 ```sql
 CREATE TABLE new_table_name AS
     SELECT column1, column2,...
     FROM existing_table_name
-    WHERE ....; # başka tablodan bazı kolonlar alınarak yeni tablo oluşturur.
+    WHERE ....; # Başka tablodan bazı kolonlar alınarak yeni tablo oluşturur.
 ```
 ### DDL - ALTER 
 Kolon ekleme / silme / değiştirme / güncelleştirme yapar.
 
 ```sql
-ALTER TABLE employees ADD birthdate DATE; # yeni kolon ekler
-ALTER TABLE employees DROP COLUMN birthdate; # kolonu siler
-ALTER TABLE employees MODIFY salary DECIMAL(10,2); # veri tipini değiştirir
+ALTER TABLE employees ADD birthdate DATE; # Yeni kolon ekler.
+ALTER TABLE employees DROP COLUMN birthdate; # Kolonu siler.
+ALTER TABLE employees MODIFY salary DECIMAL(10,2); # Veri tipini değiştirir.
 ```
 ### DDL - DROP
 Bir tabloyu tamamen kalıcı olarak siler. 
@@ -132,10 +139,10 @@ RENAME TABLE employees TO staff;
 Bir tabloya veya sütuna açıklama eklemek için kullanılır.
 
 ```sql
-COMMENT ON TABLE employees IS 'Çalışan bilgilerini tutan tablo'; #Tabloya yorum ekleme
+COMMENT ON TABLE employees IS 'Çalışan bilgilerini tutan tablo'; # Tabloya yorum ekleme.
 ```
 ```sql
-COMMENT ON COLUMN employees.name IS 'Çalışanın adı'; #Sütuna yorum ekleme
+COMMENT ON COLUMN employees.name IS 'Çalışanın adı'; # Sütuna yorum ekleme.
 SELECT * FROM employees;
 ```
 ### DCL - GRANT
@@ -154,7 +161,7 @@ REVOKE INSERT ON employees TO user1;
 DENY, bir kullanıcıya veya role belirli bir veritabanı nesnesi üzerindeki bir izni açıkça yasaklamak için kullanılan bir DCL komutudur. GRANT ile verilen izinlerden daha yüksek önceliğe sahiptir ve kullanıcıda ilgili izin olsa bile erişimi engeller.
 
 ```sql
-DENY SELECT ON employees TO user1; # user1 kullanıcısının employees tablosundan SELECT yapmasını engeller:
+DENY SELECT ON employees TO user1; # user1 kullanıcısının employees tablosundan SELECT yapmasını engeller.
 ```
 ### TCL - COMMIT
 Yapılan değişiklikleri kalıcı hale getirir. Transaction onaylanır. Değişiklikler geri alınamaz.
@@ -180,19 +187,19 @@ Bir transaction’ın özelliklerini (örneğin isolation level, read/write modu
 SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
 BEGIN;
 SELECT * FROM orders;
-COMMIT; # isolation belirleme
+COMMIT; # Isolation belirleme.
 ```
 ```sql
 SET TRANSACTION READ ONLY;
 BEGIN;
 SELECT COUNT(*) FROM logs;
-COMMIT; # sadece okuma
+COMMIT; # Sadece okuma.
 ```
 ```sql
 SET TRANSACTION READ WRITE;
 BEGIN;
 UPDATE employees SET salary = salary * 1.1;
-COMMIT; # sadece yazma
+COMMIT; # Sadece yazma.
 ```
 ### TCL - SET CONSTRAINT
 Bir transaction sırasında foreign key veya check constraint gibi kısıtlamaların ne zaman kontrol edileceğini belirlemek için kullanılan bir TCL komutudur. Özellikle PostgreSQL gibi sistemlerde yaygın kullanılır.Kısıtlamalar iki şekilde ayarlanabilir:
@@ -202,20 +209,20 @@ DEFERRED → Kısıtlamalar transaction sonuna kadar kontrol edilmez.
 IMMEDIATE → Kısıtlamalar her işlemden sonra anında kontrol edilir.
 ```sql
 BEGIN;
-SET CONSTRAINTS ALL DEFERRED; # Bu işlemler sırasında FK hatası hemen oluşmaz
+SET CONSTRAINTS ALL DEFERRED; # Bu işlemler sırasında FK hatası hemen oluşmaz.
 UPDATE orders SET customer_id = 999 WHERE id = 1; 
 UPDATE customers SET id = 999 WHERE id = 10;
-COMMIT; # Tüm kısıtlamaları transaction sonuna erteleme
+COMMIT; # Tüm kısıtlamaları transaction sonuna erteleme.
 ```
 ```sql
 BEGIN;
 SET CONSTRAINTS fk_orders_customer DEFERRED;
 UPDATE orders SET customer_id = 200 WHERE id = 5;
-COMMIT; # Belirli bir constraint’i DEFERRED yapma
+COMMIT; # Belirli bir constraint’i DEFERRED yapma.
 ```
 ```sql
-SET CONSTRAINTS ALL IMMEDIATE; # Kısıtlamaları tekrar IMMEDIATE moda alma
-# Bu durumda, o anda geçersiz bir veri varsa sistem anında hata verir
+SET CONSTRAINTS ALL IMMEDIATE; # Kısıtlamaları tekrar IMMEDIATE moda alma.
+# Bu durumda, o anda geçersiz bir veri varsa sistem anında hata verir.
 ```
 
 
