@@ -50,26 +50,26 @@ Veriyi sorgulamak için kullanılır. Veriyi okur/sorgular.
 Bir tablodan verinin seçilmesine yarar.
 
 ```sql
-SELECT * FROM employees; # Tüm kolonları gösterir
-SELECT column1, column2,... FROM employees; # Sadece istenilen kolonlar gösterilir.
+SELECT * FROM film; # Tüm kolonları gösterir.
+SELECT column1, column2,... FROM film; # Sadece istenilen kolonlar gösterilir.
 ```
 ### DML - INSERT 
 Yeni kayıt ekler. Eksik kalanlara varsayılan değer atanır(NULL veya DEFAULT)
 
 ```sql
-INSERT INTO employees (name, age) VALUES ('Ahmet', 30);
+INSERT INTO actor(first_name, last_name) VALUES ('Ahmet', 'Veli');
 ```
 ### DML - UPDATE 
 Mevcut veriyi günceller. Eğer WHERE komutu kullanılmadığında hepsini günceller. 
 
 ```sql
-UPDATE employees SET age = 31 WHERE name = 'Ahmet';
+UPDATE actor SET first_name='Ayşe' WHERE actor_id=1;
 ```
 ### DML - DELETE 
 Mevcut kaydı siler. Sadece belirtilen kayıtları siler.
 
 ```sql
-DELETE FROM employees WHERE name = 'Ahmet';
+DELETE FROM film_actor WHERE actor_id=1;
 ```
 ### DML - CALL 
 Bir veritabanı içinde tanımlanmış stored procedure çalıştırmak için kullanılan DML komutudur.
@@ -97,11 +97,15 @@ LOCK TABLE employees IN EXCLUSIVE MODE; # Diğer kullanıcıların tabloya eriş
 Tablo oluşturur.
 
 ```sql
-CREATE TABLE emplooyes(
-              id INT PrimaryKEY,
-              name varchar(100),
-              salary decimal(10,2),
-              depertmant_id INT);  # Yeni tablo oluşturur.
+CREATE TABLE test_actor(
+   actor_id SERIAL PRIMARY KEY,
+	  first_name VARCHAR(50),
+	  last_name VARCHAR(50),
+	  birth_date DATE,
+	  active BOOLEAN,
+	  height_cm NUMERIC(5,2),
+	  notes TEXT
+);  # Yeni tablo oluşturur.
 ```
 ```sql
 CREATE TABLE new_table_name AS
@@ -113,93 +117,106 @@ CREATE TABLE new_table_name AS
 Kolon ekleme / silme / değiştirme / güncelleştirme yapar.
 
 ```sql
-ALTER TABLE employees ADD birthdate DATE; # Yeni kolon ekler.
-ALTER TABLE employees DROP COLUMN birthdate; # Kolonu siler.
-ALTER TABLE employees MODIFY salary DECIMAL(10,2); # Veri tipini değiştirir.
+ALTER TABLE test_actor ADD COLUMN email VARCHAR(50); # Yeni sütun ekler.
+ALTER TABLE test_actor RENAME COLUMN notes TO remarks; # Sutün adını değiştirir.
+ALTER TABLE test_actor ALTER COLUMN height_cm TYPE DECIMAL(6,2); # Sütun tipini değiştirir.
+ALTER TABLE test_actor DROP COLUMN active; # Sütunu siler.
 ```
 ### DDL - DROP
 Bir tabloyu tamamen kalıcı olarak siler. 
 
 ```sql
-DROP TABLE emplooyes;
+DROP TABLE test_actor;
 ```
 ### DDL - TRUNCATE 
 Tabloyu boşaltır. Geri alınamaz fakat tablonun içindeki verileri siler tablo yapısını korur.
 
 ```sql
-TRUNCATE TABLE employees;
+TRUNCATE TABLE test_actor;
 ```
 ### DDL - RENAME 
 Tablonun adını değiştirir.
 
 ```sql
-RENAME TABLE employees TO staff;
+RENAME TABLE test_actor TO all_actors;
+ALTER TABLE test_actor RENAME TO all_actors; # PostgreSQL'de bu şekilde çalışır.
 ```
 ### DDL - COMMENT 
 Bir tabloya veya sütuna açıklama eklemek için kullanılır.
 
 ```sql
-COMMENT ON TABLE employees IS 'Çalışan bilgilerini tutan tablo'; # Tabloya yorum ekleme.
+COMMENT ON TABLE all_actors IS 'Tüm aktörlerin bilgilerini tutan test tablosudur.'; # Tabloya yorum ekleme.
 ```
 ```sql
-COMMENT ON COLUMN employees.name IS 'Çalışanın adı'; # Sütuna yorum ekleme.
-SELECT * FROM employees;
+COMMENT ON COLUMN all_actors.first_name IS 'Aktörün adı'; # Sütuna yorum ekleme.
 ```
 ### DCL - GRANT
 Kullanıcılara yetki verir. Güvenlik için kullanılır.
 
 ```sql
-GRANT SELECT, INSERT ON employees TO user1;
+GRANT SELECT ON TABLE all_actors TO public; # Tüm kullanıcılara izin verir.
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE all_actors TO my_user; # Belirli bir kullanıcıya izin verir. 
+GRANT SELECT(first_name, last_name) ON TABLE all_actors TO my_user; # Sütun bazlı izin verir.
+```
+```sql
+CREATE ROLE actor_reader; # Rol oluştur.
+GRANT SELECT ON TABLE all_actors TO actor_reader; # Oluşturulan role izin verir.
 ```
 ### DCL - REVOKE
 Yetkileri geri alır. Kullanıcı erişimi kaybeder.
 
 ```sql
-REVOKE INSERT ON employees TO user1;
+REVOKE SELECT ON TABLE all_actors FROM public; # Daha önce herkese verilen tüm izinler kaldırılır.
+REVOKE ALL PRIVILEGES ON TABLE all_actors FROM my_user; # Kullanıcıya tabloya hiç bir şekilde erişemez.
+REVOKE SELECT(first_name, last_name) ON TABLE all_actors FROM my_user; # Kullanıcı sadece iki sütuna erişemez.
 ```
 ### DCL - DENY
 DENY, bir kullanıcıya veya role belirli bir veritabanı nesnesi üzerindeki bir izni açıkça yasaklamak için kullanılan bir DCL komutudur. GRANT ile verilen izinlerden daha yüksek önceliğe sahiptir ve kullanıcıda ilgili izin olsa bile erişimi engeller.
 
 ```sql
-DENY SELECT ON employees TO user1; # user1 kullanıcısının employees tablosundan SELECT yapmasını engeller.
+DENY SELECT ON employees TO user1; # user1 kullanıcısının employees tablosundan SELECT yapmasını engeller. PostgreSQL de DENY komutu yok.
 ```
 ### TCL - COMMIT
 Yapılan değişiklikleri kalıcı hale getirir. Transaction onaylanır. Değişiklikler geri alınamaz.
 
 ```sql
-COMMIT;
+BEGIN;
+UPDATE all_actors SET first_name = 'Test' WHERE actor_id = 1;
+COMMIT; # Bir işlem başlatır ve kalıcı hale gelir.
 ```
 ### TCL - ROLLBACK
 Değişiklikleri geri alır. Commit yapılmamış tüm işlemler geri döner.
 
 ```sql
-ROLLBACK;
+BEGIN;
+UPDATE all_actors SET first_name = 'Silinsin' WHERE actor_id = 1;
+ROLLBACK; 
 ```
 ### TCL - SAVEPOINT
 Ara kontrol noktası oluşturur. ROLLBACK işlemini daha küçük bölümlere ayırır.
 
 ```sql
-SAVEPOINT sp1;
+BEGIN;
+UPDATE all_actors SET height_cm = 180 WHERE actor_id = 1;
+SAVEPOINT sp1;     -- Ara nokta oluştur.
+UPDATE all_actors SET height_cm = 999 WHERE actor_id = 2;
+ROLLBACK TO sp1;   -- 999 değişikliği geri alındı, ilk UPDATE kaldı.
+COMMIT;
 ```
 ### TCL - SET TRANSACTION
 Bir transaction’ın özelliklerini (örneğin isolation level, read/write modu gibi) başlatılmadan önce tanımlamak için kullanılan bir TCL komutudur.Bu komut, veritabanı işlemlerinin nasıl davranacağını kontrol etmeye yarar.
 ```sql
+BEGIN;
 SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
-BEGIN;
-SELECT * FROM orders;
-COMMIT; # Isolation belirleme.
+-- işlemler
+COMMIT;
+
 ```
 ```sql
+BEGIN;
 SET TRANSACTION READ ONLY;
-BEGIN;
-SELECT COUNT(*) FROM logs;
-COMMIT; # Sadece okuma.
-```
-```sql
-SET TRANSACTION READ WRITE;
-BEGIN;
-UPDATE employees SET salary = salary * 1.1;
-COMMIT; # Sadece yazma.
+SELECT * FROM all_actors;
+COMMIT; -- Sadece okuma.
 ```
 ### TCL - SET CONSTRAINT
 Bir transaction sırasında foreign key veya check constraint gibi kısıtlamaların ne zaman kontrol edileceğini belirlemek için kullanılan bir TCL komutudur. Özellikle PostgreSQL gibi sistemlerde yaygın kullanılır.Kısıtlamalar iki şekilde ayarlanabilir:
@@ -209,21 +226,11 @@ DEFERRED → Kısıtlamalar transaction sonuna kadar kontrol edilmez.
 IMMEDIATE → Kısıtlamalar her işlemden sonra anında kontrol edilir.
 ```sql
 BEGIN;
-SET CONSTRAINTS ALL DEFERRED; # Bu işlemler sırasında FK hatası hemen oluşmaz.
-UPDATE orders SET customer_id = 999 WHERE id = 1; 
-UPDATE customers SET id = 999 WHERE id = 10;
-COMMIT; # Tüm kısıtlamaları transaction sonuna erteleme.
+SET CONSTRAINTS ALL DEFERRED;
+-- Geçici olarak FK hatası verecek işlemler yapılabilir.
+COMMIT;   -- Burada constraint kontrol edilir.
 ```
-```sql
-BEGIN;
-SET CONSTRAINTS fk_orders_customer DEFERRED;
-UPDATE orders SET customer_id = 200 WHERE id = 5;
-COMMIT; # Belirli bir constraint’i DEFERRED yapma.
-```
-```sql
-SET CONSTRAINTS ALL IMMEDIATE; # Kısıtlamaları tekrar IMMEDIATE moda alma.
-# Bu durumda, o anda geçersiz bir veri varsa sistem anında hata verir.
-```
+
 
 
 
