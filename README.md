@@ -254,6 +254,9 @@ FROM musteriler m
 INNER JOIN siparisler s ON m.musteri_id = s.musteri_id
 ORDER BY m.ad, s.siparis_tarihi;
 ```
+Elde edilen tablo:
+<img width="781" height="427" alt="image" src="https://github.com/user-attachments/assets/836f4139-5c88-4144-a234-42fb78c189ec" />
+
 Şehir bazında sipariş analizi: 
 ```sql
 SELECT 
