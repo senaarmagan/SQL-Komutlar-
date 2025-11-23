@@ -238,11 +238,71 @@ Birden fazla tabloyu ilişkilendirerek veri çeker. İlişkisel veritabanların�
 ## INNER JOIN
 
 En çok kullanılan join türüdür. Sadece her iki tablodan da eşleşen kayıtlar getirir. 
+Join yapılarının daha detaylı öğrenilmesi için basit bir database oluşturuldu. Müşteriler, urun, kategori ve siparişler adında tablolar bulunmakta ve bu tablolar istenilen şekilde join işelmeleri yapılmakta.
 
-<img width="236" height="211" alt="image" src="https://github.com/user-attachments/assets/47e5140a-d44d-464c-a8aa-f854fa1ccc21" />
+Bu sorgu da sadece sipariş vermiş müşterileri gösterir. Hiç sipariş vermemiş müşteriler listede görünmez. Müşteriler tablosundaki müşteri ile sipariş tablosundaki müsterinin aynı kişiye ait olup olmadığını eşleştirmekte.
 
+```sql
+SELECT 
+	m.ad,
+	m.soyad,
+	m.sehir,
+	s.urun,
+	s.fiyat,
+	s.siparis_tarihi
+FROM musteriler m
+INNER JOIN siparisler s ON m.musteri_id = s.musteri_id
+ORDER BY m.ad, s.siparis_tarihi;
+```
+Şehir bazında sipariş analizi: 
+```sql
+SELECT 
+	m.sehir,
+	COUNT(DISTINCT m.musteri_id) AS musteri_sayisi,
+	COUNT(s.siparis_id) AS toplam_siparis,
+	ROUND(AVG(s.fiyat)::NUMERIC,2) AS ortalama_fiyat,
+	SUM(s.fiyat) AS toplam_ciro
+FROM musteriler m
+INNER JOIN siparisler s ON m.musteri_id=s.musteri_id
+GROUP BY m.sehir
+ORDER BY toplam_ciro DESC;
+```
+Sonuç olarak elde edilen tablo bu şekildedir:
+<img width="772" height="236" alt="image" src="https://github.com/user-attachments/assets/b7d82bcd-1583-47cd-8e12-0b77540e0428" />
+Ürün-Kategori Eşleştirmesi : 
+```sql
+SELECT 
+    u.urun_adi,
+    u.stok,
+    u.birim_fiyat,
+    k.kategori_adi,
+    k.aciklama,
+    CASE 
+        WHEN u.stok = 0 THEN '🔴 Stokta Yok'
+        WHEN u.stok < 10 THEN '🟡 Kritik Seviye'
+        WHEN u.stok < 30 THEN '🟢 Normal Seviye'
+        ELSE '🔵 Bol Stok'
+    END AS stok_durumu
+FROM urunler u
+INNER JOIN kategoriler k ON u.kategori = k.kategori_adi
+ORDER BY u.stok ASC;
+```
+Sonuç olarak elde edilen tablo bu şekildedir:
+<img width="1050" height="645" alt="image" src="https://github.com/user-attachments/assets/edfea3c3-6d87-4ab3-9417-8215cd97a2ea" />
+En çok Sipariş veren 5 müşteriyi bul:
 
-
+```sql
+SELECT 
+	m.ad || ' ' || m.soyad AS musteri_adi,
+	COUNT(DISTINCT s.siparis_id) AS siparis_sayisi,
+	SUM(s.fiyat) AS toplam_harcama,
+	ROUND(AVG(s.fiyat)::NUMERIC,2) AS ortlama_sepet
+FROM musteriler m
+INNER JOIN siparisler s ON m.musteri_id = s.musteri_id
+GROUP BY m.musteri_id, m.ad, m,soyad
+ORDER BY siparis_sayisi ASC, toplam_harcama DESC LIMIT 5;
+```
+<img width="598" height="201" alt="image" src="https://github.com/user-attachments/assets/200a0699-b3a5-4c97-b1ce-928db47a88a8" />
 
 
 
