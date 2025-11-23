@@ -231,7 +231,15 @@ SET CONSTRAINTS ALL DEFERRED;
 COMMIT;   -- Burada constraint kontrol edilir.
 ```
 
+# JOIN TÜRLERİ
 
+Birden fazla tabloyu ilişkilendirerek veri çeker. İlişkisel veritabanlarının temel taşlarından biridir.
+
+## INNER JOIN
+
+En çok kullanılan join türüdür. Sadece her iki tablodan da eşleşen kayıtlar getirir. 
+
+<img width="236" height="211" alt="image" src="https://github.com/user-attachments/assets/47e5140a-d44d-464c-a8aa-f854fa1ccc21" />
 
 
 
