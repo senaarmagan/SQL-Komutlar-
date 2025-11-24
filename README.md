@@ -382,9 +382,160 @@ ORDER BY son_siparis_tarihi NULLS LAST;
 ```
 <img width="897" height="433" alt="image" src="https://github.com/user-attachments/assets/ec3a9fe7-6b96-442d-84f6-ebe367f6e3a7" />
 
+## RIGHT JOIN
+İki tabloyu birleştirirken sağ taraftaki tablonun tüm kayıtlarını sonuçta gösteren join türüdür. Sol tarafta eşleşme olsa da olmasa da sağ tablonun tümü gelir. Left Joinin tam tersidir. Soldaki tablodan sadece eşleşenler gelir. Sol tabloda eşleşmezse o tarafın kolonları NULL döner. 
 
+Örnek: 
+```sql
+SELECT 
+    s.siparis_id,
+    s.urun,
+    s.fiyat,
+    s.siparis_tarihi,
+    COALESCE(m.ad || ' ' || m.soyad, 'Silinmiş Müşteri') AS musteri_adi
+FROM musteriler m
+RIGHT JOIN siparisler s ON m.musteri_id = s.musteri_id
+ORDER BY s.siparis_tarihi DESC;
+```
+Her siparişi ve müşteri bilgilerini göster. Aslında müşteri silinmiş bile olsa sipariş görünsün.
+<img width="620" height="331" alt="image" src="https://github.com/user-attachments/assets/fae17791-54ba-49a7-a47f-afff38c733a3" />
+## FULL OUTER JOIN 
+SQL'de iki tabloyu birleştirirken her iki tablodaki tüm kayıtları sonuçta gösterir. Eşleşen kayıtlar birleştirilir, eşleşmeyen kayıtların eksik tarafı NULL olarak döner.
+```sql
+SELECT 
+    COALESCE(m.ad || ' ' || m.soyad, '❌ Müşteri Yok') AS musteri,
+    m.sehir,
+    COALESCE(s.urun, '❌ Sipariş Yok') AS urun,
+    s.fiyat,
+    CASE 
+        WHEN m.musteri_id IS NULL THEN '⚠️ Yetim Sipariş'
+        WHEN s.siparis_id IS NULL THEN '⚠️ Alışveriş Yapmamış'
+        ELSE '✅ Normal'
+    END AS durum
+FROM musteriler m
+FULL OUTER JOIN siparisler s ON m.musteri_id = s.musteri_id
+ORDER BY durum, m.ad;
+```
+Tüm müşteriler + Tüm siparişler (eşleşme olsun veya olmasın) 
 
+<img width="827" height="330" alt="image" src="https://github.com/user-attachments/assets/6c6d2c57-6638-4440-9d12-3d28f1a438ec" />
 
+### Birden Fazla Tablo ile Join İşlemleri
+Her zaman 2 tabloyla çalışılmayabilir. Birden fazla tablo kullanılarak işlemler yapılır. 
+Örnek 1:
+```sql
+SELECT 
+    m.ad || ' ' || m.soyad AS musteri,
+    m.sehir,
+    s.siparis_tarihi,
+    s.urun AS siparis_edilen,
+    s.fiyat AS odenen_fiyat,
+    u.birim_fiyat AS guncel_fiyat,
+    (s.fiyat - u.birim_fiyat) AS fiyat_farki,
+    u.stok AS mevcut_stok
+FROM musteriler m
+INNER JOIN siparisler s ON m.musteri_id = s.musteri_id
+INNER JOIN urunler u ON s.urun = u.urun_adi
+ORDER BY s.siparis_tarihi DESC;
+```
+Bu işlem de müşteri, sipariş ve urun tablosu kullanılarak sipariş verilen ürünlerin ödenen fiyat ile güncel fiyat arasındaki fark hesaplanmıştır.
+<img width="1175" height="298" alt="image" src="https://github.com/user-attachments/assets/931cb3e5-b754-4edb-9217-a90156748f2f" />
+
+Örnek 2:
+Hangi Şehir Hangi Kategoriyi Tercih Etmiştir:
+```sql
+WITH sehir_kategori_tercihleri AS (
+    SELECT 
+        m.sehir,
+        k.kategori_adi,
+        COUNT(s.siparis_id) AS siparis_sayisi,
+        SUM(s.fiyat) AS toplam_harcama,
+        ROW_NUMBER() OVER (PARTITION BY m.sehir ORDER BY COUNT(s.siparis_id) DESC) AS sira
+    FROM musteriler m
+    INNER JOIN siparisler s ON m.musteri_id = s.musteri_id
+    INNER JOIN urunler u ON s.urun = u.urun_adi
+    INNER JOIN kategoriler k ON u.kategori = k.kategori_adi
+    GROUP BY m.sehir, k.kategori_adi
+)
+SELECT 
+    sehir,
+    kategori_adi AS en_cok_tercih_edilen,
+    siparis_sayisi,
+    toplam_harcama
+FROM sehir_kategori_tercihleri
+WHERE sira = 1
+ORDER BY toplam_harcama DESC;
+```
+<img width="697" height="247" alt="image" src="https://github.com/user-attachments/assets/be1969ee-cdfd-4c3d-820c-20427de50581" />
+
+## SELF JOIN 
+Bir tablonun kendiyle join edilmesidir. Yani aynı tabloyu hem sol hem sağ tablo gibi kullanılır.
+Bir tablodaki satırları aynı tablodaki diğer satırlarla ilişkilendirmek için kullanılır. Örneğin bir ürünün benzer ürünlerini eşleştirmek, bir öğrencinin başka bir öğrenciden yüksek not alıp almadığını bulmak veya tarihsel kayıtları kendine bağlamak gibi işlemlerde kullanılır.
+Örnek : Aynı Şehirdeki Müşterileri Eşleştir:
+```sql
+SELECT
+	m1.ad || ' ' || m1.soyad AS musteri_1,
+	m2.ad || ' ' || m2.soyad AS musteri_2,
+	m1.sehir AS ortak_sehir,
+	m1.email AS email_1,
+	m2.email AS email_2
+FROM musteriler m1
+INNER JOIN musteriler m2 ON m1.sehir = m2.sehir
+	AND m1.musteri_id < m2.musteri_id -- Tekrar ve kendi kendine eşleşmeyi önler
+ORDER BY m2.sehir, m1.ad;
+```
+<img width="852" height="210" alt="image" src="https://github.com/user-attachments/assets/f973462b-95f7-4164-bbd4-027c84e603c2" />
+
+Örnek 2: Aynı Ürünü Alan Müşteriler:
+```sql
+SELECT 
+	s1.urun,
+	m1.ad || ' ' || m1.soyad AS musteri_1,
+    m2.ad || ' ' || m2.soyad AS musteri_2,
+    m1.sehir AS sehir_1,
+    m2.sehir AS sehir_2,
+	CASE
+		WHEN m1.sehir = m2.sehir THEN 'Aynı Şehir'
+		ELSE 'Farklı Şehir'
+	END AS lokasyon_durumu
+FROM siparisler s1
+INNER JOIN siparisler s2 ON s1.urun = s2.urun
+	AND s1.musteri_id < s2.musteri_id
+INNER JOIN musteriler m1 ON s1.musteri_id = m1.musteri_id
+INNER JOIN musteriler m2 ON s2.musteri_id = m2.musteri_id
+ORDER BY s1.urun, m1.ad;
+```
+<img width="942" height="267" alt="image" src="https://github.com/user-attachments/assets/c3ef2010-a4d3-42ed-8415-7d651af3cf20" />
+
+## CROSS JOIN
+İki tabloyu birleştirirken her iki tablonun tüm satırlarının birbiriyle çarpımını (Cartesian product) oluşturan join türüdür. Yani sol tabloda A kadar satır var, Sağ tabloda B kadar satır var ise Sonuç olarak A x B satır olur.
+Örnek : Tüm Müşteri - Ürün Kombinasyonları
+```sql
+SELECT 
+    m.ad || ' ' || m.soyad AS musteri,
+    m.sehir,
+    u.urun_adi,
+    u.kategori,
+    u.birim_fiyat,
+    CASE 
+        WHEN EXISTS (
+            SELECT 1 FROM siparisler s 
+            WHERE s.musteri_id = m.musteri_id 
+            AND s.urun = u.urun_adi
+        ) THEN '✅ Daha Önce Aldı'
+        ELSE '💡 Öneri'
+    END AS durum
+FROM musteriler m
+CROSS JOIN urunler u
+WHERE m.musteri_id = 1  -- Sadece Ahmet için
+ORDER BY 
+    CASE WHEN EXISTS (SELECT 1 FROM siparisler s WHERE s.musteri_id = m.musteri_id AND s.urun = u.urun_adi) 
+         THEN 1 ELSE 0 END,
+    u.kategori;
+```
+Sadece 1 müşteri için tüm ürünlerin potansiyel önerileri oluşturuldu.
+
+<img width="1015" height="231" alt="image" src="https://github.com/user-attachments/assets/1a00019d-68a2-499c-8644-888ebbefad09" />
 
 
 # Kaynaklar
