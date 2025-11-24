@@ -307,10 +307,80 @@ ORDER BY siparis_sayisi ASC, toplam_harcama DESC LIMIT 5;
 ```
 <img width="598" height="201" alt="image" src="https://github.com/user-attachments/assets/200a0699-b3a5-4c97-b1ce-928db47a88a8" />
 
+## LEFT JOIN
+Sol taraftaki tablodaki tüm kayıtları getirir ve sağdaki tabloda eşleşme olsa da olmasa da sonuç döndürür. Sağdaki tabloda eşleşme varsa o değerleri alır eşleşme yoksa NULL değeri atar.
 
+Hiç sipariş vermemiş Müşteriler:
+```sql
+SELECT 
+	m.musteri_id,
+	m.ad,
+	m.soyad,
+	m.sehir,
+	m.kayit_tarihi,
+	s.siparis_id
+FROM musteriler m
+LEFT JOIN siparisler s ON m.musteri_id = s.musteri_id
+WHERE s.siparis_id IS NULL;
+```
+Sol tablodan (müşteriler) tüm kayıtlar alınır diğer tablodan da (siparişler) sipariş olmayan veriler alındı sadece. WHERE komutu ile NULL olan değerlere bakıldı. 
+<img width="933" height="122" alt="image" src="https://github.com/user-attachments/assets/8f1b4bb4-5121-4f5a-bda4-3b8ca2aad887" />
 
+Tüm müşterilerin sipariş istatistikleri:
+```sql
+SELECT 
+    m.ad || ' ' || m.soyad AS musteri_adi,
+    m.sehir,
+    m.kayit_tarihi,
+    COUNT(s.siparis_id) AS siparis_sayisi,
+    COALESCE(SUM(s.fiyat), 0) AS toplam_harcama,
+    CASE 
+        WHEN COUNT(s.siparis_id) = 0 THEN '🆕 Yeni Müşteri'
+        WHEN COUNT(s.siparis_id) BETWEEN 1 AND 2 THEN '🌱 Aktif Olmaya Başladı'
+        WHEN COUNT(s.siparis_id) BETWEEN 3 AND 5 THEN '🔥 Aktif Müşteri'
+        ELSE '⭐ VIP Müşteri'
+    END AS segment
+FROM musteriler m
+LEFT JOIN siparisler s ON m.musteri_id = s.musteri_id
+GROUP BY m.musteri_id, m.ad, m.soyad, m.sehir, m.kayit_tarihi
+ORDER BY siparis_sayisi DESC;
+```
+<img width="913" height="422" alt="image" src="https://github.com/user-attachments/assets/2e30e900-9c7d-43d7-b272-1ba379bbc083" />
 
+Satılmamış Ürünler:
+```sql
+SELECT 
+    u.urun_adi,
+    u.kategori,
+    u.stok,
+    u.birim_fiyat,
+    u.tedarikci,
+    COUNT(s.siparis_id) AS satis_adedi
+FROM urunler u
+LEFT JOIN siparisler s ON u.urun_adi = s.urun
+GROUP BY u.urun_id, u.urun_adi, u.kategori, u.stok, u.birim_fiyat, u.tedarikci
+HAVING COUNT(s.siparis_id) = 0
+ORDER BY u.stok DESC;
+```
+<img width="957" height="126" alt="image" src="https://github.com/user-attachments/assets/ce0db8fa-229e-4620-bb87-702db494f44d" />
 
+Son 3 ayda sipariş vermeyen Müşteriler:
+```sql
+SELECT 
+    m.musteri_id,
+    m.ad || ' ' || m.soyad AS musteri_adi,
+    m.email,
+    MAX(s.siparis_tarihi) AS son_siparis_tarihi,
+    CURRENT_DATE - MAX(s.siparis_tarihi) AS gecen_gun,
+    COUNT(s.siparis_id) AS toplam_siparis
+FROM musteriler m
+LEFT JOIN siparisler s ON m.musteri_id = s.musteri_id
+GROUP BY m.musteri_id, m.ad, m.soyad, m.email
+HAVING MAX(s.siparis_tarihi) < CURRENT_DATE - INTERVAL '90 days'
+   OR MAX(s.siparis_tarihi) IS NULL
+ORDER BY son_siparis_tarihi NULLS LAST;
+```
+<img width="897" height="433" alt="image" src="https://github.com/user-attachments/assets/ec3a9fe7-6b96-442d-84f6-ebe367f6e3a7" />
 
 
 
